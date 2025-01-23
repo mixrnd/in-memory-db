@@ -18,6 +18,15 @@ const (
 	DelCommand Command = "DEL"
 )
 
+const (
+	maxCommandParts          = 3
+	commandIndex             = 0
+	firstArgIndex            = 1
+	secondArgIndex           = 2
+	oneCommandArgPartNumber  = 2
+	twoCommandArgsPartNumber = 3
+)
+
 type Parser struct{}
 
 func NewParser() *Parser {
@@ -26,22 +35,22 @@ func NewParser() *Parser {
 
 func (p *Parser) Parse(cmd string) (Query, error) {
 	parts := strings.Fields(cmd)
-	if len(parts) == 0 || len(parts) > 3 {
+	if len(parts) == 0 || len(parts) > maxCommandParts {
 		return Query{}, ErrUnknownCommand
 	}
 
-	command := Command(strings.ToUpper(parts[0]))
+	command := Command(strings.ToUpper(parts[commandIndex]))
 	switch command {
 	case GetCommand, DelCommand:
-		if len(parts) != 2 {
+		if len(parts) != oneCommandArgPartNumber {
 			return Query{}, ErrWrongArgumentNumber
 		}
-		return NewQuery(command, []string{parts[1]}), nil
+		return NewQuery(command, []string{parts[firstArgIndex]}), nil
 	case SetCommand:
-		if len(parts) != 3 {
+		if len(parts) != twoCommandArgsPartNumber {
 			return Query{}, ErrWrongArgumentNumber
 		}
-		return NewQuery(command, parts[1:3]), nil
+		return NewQuery(command, parts[firstArgIndex:secondArgIndex+1]), nil
 	}
 
 	return Query{}, ErrUnknownCommand
