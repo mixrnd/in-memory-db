@@ -2,24 +2,38 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 
-	"go.uber.org/zap"
-	"in-memory-db/internal"
-	"in-memory-db/internal/compute"
-	inmemory "in-memory-db/internal/storage/in-memory"
+	"in-memory-db/internal/config"
+	"in-memory-db/internal/network"
 )
 
+var address = flag.String("address", "127.0.0.1:3030", "server address")
+var configPath = flag.String("config", "config.yml", "Path to config file")
+
 func main() {
+	flag.Parse()
+
+	cfg, err := config.ParseConfig(*configPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	maxMessageSize, err := cfg.Network.MessageSizeToSizeInBytes()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	client := network.NewClient(*address, cfg.Network.IdleTimeout, maxMessageSize)
+	if err := client.Connect(); err != nil {
+		fmt.Println(err)
+		return
+	}
 	reader := bufio.NewReader(os.Stdin)
-
-	logger, _ := zap.NewProduction()
-
-	e := inmemory.NewEngine()
-	p := compute.NewParser()
-	db := internal.NewDatabase(e, p, logger)
-
 	for {
 		fmt.Print("in-memory-db > ")
 		query, err := reader.ReadString('\n')
@@ -28,7 +42,7 @@ func main() {
 			return
 		}
 
-		res, err := db.RunQuery(query)
+		res, err := client.Send(query)
 		if err != nil {
 			fmt.Printf("error > %s\n", err.Error())
 		} else {

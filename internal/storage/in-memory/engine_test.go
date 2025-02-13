@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,4 +48,24 @@ func TestEngine_Del(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = e.Get("other")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
+}
+
+// надо запусткать этот тест с флагом  -race
+func TestEngine_Parallel_NoRace(t *testing.T) {
+	e := NewEngine()
+	wg := sync.WaitGroup{}
+
+	const n int = 100
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func() {
+			defer wg.Done()
+			err := e.Set("key", "val")
+			assert.NoError(t, err)
+		}()
+	}
+	wg.Wait()
+	val, err := e.Get("key")
+	assert.NoError(t, err)
+	assert.Equal(t, "val", val)
 }
