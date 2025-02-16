@@ -8,7 +8,7 @@ import (
 
 type Engine struct {
 	data map[string]string
-	mu   sync.Mutex
+	mu   sync.RWMutex
 }
 
 func NewEngine() *Engine {
@@ -25,8 +25,8 @@ func (e *Engine) Set(key string, val string) error {
 }
 
 func (e *Engine) Get(key string) (string, error) {
-	defer e.mu.Unlock()
-	e.mu.Lock()
+	defer e.mu.RUnlock()
+	e.mu.RLock()
 	v, ok := e.data[key]
 	if !ok {
 		return "", storage.ErrNotFound

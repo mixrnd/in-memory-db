@@ -6,18 +6,6 @@ import (
 	"github.com/inhies/go-bytesize"
 )
 
-const (
-	defaultEngineType = "in-memory"
-
-	defaultNetworkAddress     = "127.0.0.1:8080"
-	defaultMaxConnection      = 2
-	defaultMaxMessageSize     = "4KB"
-	defaultIdleTimeoutMinutes = 5
-
-	defaultLogLevel  = "INFO"
-	defaultLogOutput = "/tmp/in-mem-db.log"
-)
-
 type Config struct {
 	Engine  EngineConfig  `yaml:"engine"`
 	Network NetworkConfig `yaml:"network"`
@@ -38,20 +26,6 @@ type NetworkConfig struct {
 type LogConfig struct {
 	Level  string `yaml:"level"`
 	Output string `yaml:"output"`
-}
-
-func (c *Config) SetDefaults() {
-	c.Engine = EngineConfig{Type: defaultEngineType}
-	c.Network = NetworkConfig{
-		Address:        defaultNetworkAddress,
-		MaxConnections: defaultMaxConnection,
-		MaxMessageSize: defaultMaxMessageSize,
-		IdleTimeout:    defaultIdleTimeoutMinutes * time.Minute,
-	}
-	c.Log = LogConfig{
-		Level:  defaultLogLevel,
-		Output: defaultLogOutput,
-	}
 }
 
 func (nc NetworkConfig) MessageSizeToSizeInBytes() (int, error) {

@@ -22,7 +22,7 @@ func ParseConfig(path string) (cfg *Config, err error) {
 	}()
 
 	cfg = new(Config)
-	cfg.SetDefaults()
+
 	decoder := yaml.NewDecoder(fp)
 	if err = decoder.Decode(cfg); err != nil {
 		fmt.Println("Invalid configuration YAML:", err)
