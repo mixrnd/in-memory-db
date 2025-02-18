@@ -1,11 +1,14 @@
 package inmemory
 
 import (
+	"sync"
+
 	"in-memory-db/internal/storage"
 )
 
 type Engine struct {
 	data map[string]string
+	mu   sync.RWMutex
 }
 
 func NewEngine() *Engine {
@@ -15,11 +18,15 @@ func NewEngine() *Engine {
 }
 
 func (e *Engine) Set(key string, val string) error {
+	defer e.mu.Unlock()
+	e.mu.Lock()
 	e.data[key] = val
 	return nil
 }
 
 func (e *Engine) Get(key string) (string, error) {
+	defer e.mu.RUnlock()
+	e.mu.RLock()
 	v, ok := e.data[key]
 	if !ok {
 		return "", storage.ErrNotFound
@@ -28,6 +35,8 @@ func (e *Engine) Get(key string) (string, error) {
 }
 
 func (e *Engine) Del(key string) error {
+	defer e.mu.Unlock()
+	e.mu.Lock()
 	delete(e.data, key)
 	return nil
 }
