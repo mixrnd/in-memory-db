@@ -138,13 +138,14 @@ func TestServer_RunMaxConn(t *testing.T) {
 }
 
 func createServer(maxConn int) (context.CancelFunc, *Server) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+
 	logger := zap.NewNop()
 	e := inmemory.NewEngine()
 	p := compute.NewParser()
-	db := internal.NewDatabase(e, p, logger)
-
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	walInst := wallStub{}
+	db := internal.NewDatabase(e, p, logger, walInst)
 
 	server := NewServer(ctx, testServerAddr, db, logger,
 		WithServerIdleTimeout(time.Minute),
@@ -152,4 +153,23 @@ func createServer(maxConn int) (context.CancelFunc, *Server) {
 		WithServerMaxConnectionsNumber(maxConn),
 	)
 	return cancel, server
+}
+
+type wallStub struct {
+}
+
+func (w wallStub) InitRead(f func([]byte) error) error {
+	return nil
+}
+
+func (w wallStub) Run() error {
+	return nil
+}
+
+func (w wallStub) Write(query string) error {
+	return nil
+}
+
+func (w wallStub) Close() error {
+	return nil
 }
