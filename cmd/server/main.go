@@ -53,7 +53,7 @@ func main() {
 	e := inmemory.NewEngine()
 	p := compute.NewParser()
 	segment := wal.NewSegment(maxSegmentSize, cfg.Wal.DataDirectory)
-	walInst := wal.NewWal(ctx, cfg.Wal.FlushingBatchSize, cfg.Wal.FlushingBatchTimeout, segment)
+	walInst := wal.NewWal(ctx, cfg.Wal.FlushingBatchSize, cfg.Wal.FlushingBatchTimeout, segment, logger)
 	db := internal.NewDatabase(e, p, logger, walInst)
 	db.Init()
 
@@ -79,4 +79,6 @@ func main() {
 	<-doneSignal
 
 	cancel()
+
+	walInst.WaitWrite()
 }

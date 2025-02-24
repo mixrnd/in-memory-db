@@ -27,7 +27,7 @@ func NewSegment(maxSegmentSizeBytes int, dataDirectory string) *Segment {
 	}
 }
 
-func (s *Segment) InitRead(fileHandler func(data []byte) error) error {
+func (s *Segment) Init(fileHandler func(data []byte) error) error {
 	files, err := os.ReadDir(s.DataDirectory)
 	if err != nil {
 		return err

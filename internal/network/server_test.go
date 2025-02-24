@@ -158,7 +158,7 @@ func createServer(maxConn int) (context.CancelFunc, *Server) {
 type wallStub struct {
 }
 
-func (w wallStub) InitRead(f func([]byte) error) error {
+func (w wallStub) Init(f func([]byte) error) error {
 	return nil
 }
 

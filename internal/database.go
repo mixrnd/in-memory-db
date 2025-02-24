@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"sync"
 
 	"go.uber.org/zap"
 
@@ -19,11 +18,10 @@ type Database struct {
 	parser  Parser
 	logger  *zap.Logger
 	wal     Wal
-	walMu   sync.Mutex
 }
 
 type Wal interface {
-	InitRead(f func([]byte) error) error
+	Init(f func([]byte) error) error
 	Run() error
 	Write(query string) error
 	Close() error
@@ -43,7 +41,7 @@ func NewDatabase(storage storage.Engine, parser Parser, logger *zap.Logger, wal 
 }
 
 func (d *Database) Init() {
-	if err := d.wal.InitRead(func(data []byte) error {
+	if err := d.wal.Init(func(data []byte) error {
 		scanner := bufio.NewScanner(bytes.NewReader(data))
 		for scanner.Scan() {
 			query, err := d.parser.Parse(scanner.Text())
@@ -86,13 +84,10 @@ func (d *Database) RunQuery(q string) (string, error) {
 	}
 
 	if query.Command() != compute.GetCommand {
-		d.walMu.Lock()
 		if err = d.wal.Write(query.ToSting()); err != nil {
 			d.logger.Error("write to wal", zap.Error(err))
-			d.walMu.Unlock()
 			return "", err
 		}
-		d.walMu.Unlock()
 	}
 
 	arguments := query.Args()

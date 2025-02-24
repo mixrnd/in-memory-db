@@ -18,6 +18,7 @@ import (
 
 type DatabaseSuite struct {
 	testingh.BaseDirSuite
+	walInst *wal.Wal
 }
 
 func TestDatabaseSuite(t *testing.T) {
@@ -33,8 +34,8 @@ func (s *DatabaseSuite) createDataBaseForTest(segSize, batchSize int, tm time.Du
 	e := inmemory.NewEngine()
 	p := compute.NewParser()
 	segment := wal.NewSegment(segSize, s.BaseDir)
-	walInst := wal.NewWal(s.Ctx, batchSize, tm, segment)
-	return NewDatabase(e, p, zap.NewNop(), walInst)
+	s.walInst = wal.NewWal(s.Ctx, batchSize, tm, segment, zap.NewNop())
+	return NewDatabase(e, p, zap.NewNop(), s.walInst)
 }
 
 func (s *DatabaseSuite) TestDatabase_RunQuery_SetGetDel() {
@@ -88,7 +89,7 @@ func (s *DatabaseSuite) TestDatabase_RunQuery_WriteToWalByTimeout() {
 }
 
 func (s *DatabaseSuite) TestDatabase_RunQuery_WriteToWalByBatchSize() {
-	db := s.createDataBaseForTest(4096, 104, 100*time.Millisecond)
+	db := s.createDataBaseForTest(4096, 130, 1000*time.Millisecond)
 	db.Init()
 
 	const queryNumber = 10
@@ -98,7 +99,8 @@ func (s *DatabaseSuite) TestDatabase_RunQuery_WriteToWalByBatchSize() {
 		s.Equal("[ok]", r)
 	}
 	s.CtxCancelFunc()
-	time.Sleep(10 * time.Millisecond)
+	s.walInst.WaitWrite()
+	//time.Sleep(10 * time.Millisecond)
 	fileNames := s.FileNamesInBaseDir()
 
 	s.ElementsMatch([]string{"data_1"}, fileNames)
@@ -111,7 +113,7 @@ func (s *DatabaseSuite) TestDatabase_RunQuery_WriteToWalByBatchSize() {
 }
 
 func (s *DatabaseSuite) TestDatabase_RunQuery_WriteToWalTwoFiles() {
-	db := s.createDataBaseForTest(104, 104, 500*time.Millisecond)
+	db := s.createDataBaseForTest(104, 90, 500*time.Millisecond)
 	db.Init()
 
 	const queryNumber = 10
@@ -122,7 +124,7 @@ func (s *DatabaseSuite) TestDatabase_RunQuery_WriteToWalTwoFiles() {
 	}
 
 	s.CtxCancelFunc()
-	time.Sleep(10 * time.Millisecond)
+	s.walInst.WaitWrite()
 
 	files, err := os.ReadDir(s.BaseDir)
 	s.NoError(err)
@@ -168,4 +170,7 @@ func (s *DatabaseSuite) TestDatabase_RunQuery_ReadWalInit() {
 
 	val, err = db.RunQuery("GET key3")
 	s.Equal("444", val)
+
+	s.CtxCancelFunc()
+	s.walInst.WaitWrite()
 }

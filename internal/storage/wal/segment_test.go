@@ -43,7 +43,7 @@ func (s *SegmentSuite) TestInitRead_BasedirWithData() {
 
 	segment := NewSegment(120, s.BaseDir)
 	counter := 1
-	err := segment.InitRead(func(data []byte) error {
+	err := segment.Init(func(data []byte) error {
 		content := fileInfo[fmt.Sprintf(fileNameTemplate, counter)]
 		s.Equal(string(data), content)
 		counter++
@@ -58,7 +58,7 @@ func (s *SegmentSuite) TestInitRead_BasedirWithData() {
 func (s *SegmentSuite) TestInitReadAndWrite_NoFilesExisted() {
 	segment := NewSegment(120, s.BaseDir)
 	counter := 1
-	err := segment.InitRead(func(data []byte) error {
+	err := segment.Init(func(data []byte) error {
 		counter++
 		return nil
 	})
@@ -84,7 +84,7 @@ func (s *SegmentSuite) TestInitReadAndWrite_NoFilesExisted() {
 func (s *SegmentSuite) TestFileRotation() {
 	segment := NewSegment(32, s.BaseDir)
 	counter := 1
-	err := segment.InitRead(func(data []byte) error {
+	err := segment.Init(func(data []byte) error {
 		counter++
 		return nil
 	})
@@ -111,7 +111,7 @@ func (s *SegmentSuite) TestFileRotation() {
 func (s *SegmentSuite) TestFileRotation_FirstDataMoreThenMaxSegmentSizeBytes() {
 	segment := NewSegment(12, s.BaseDir)
 	counter := 1
-	err := segment.InitRead(func(data []byte) error {
+	err := segment.Init(func(data []byte) error {
 		counter++
 		return nil
 	})
