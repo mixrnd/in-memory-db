@@ -54,7 +54,7 @@ func (w *Wal) Run() error {
 	ticker := time.NewTicker(w.FlushingBatchTimeout)
 	defer ticker.Stop()
 
-	writeCtx, writeCancel := context.WithCancel(w.ctx)
+	writeCtx, writeCancel := context.WithCancel(context.Background())
 	go func() {
 		defer func() {
 			w.segment.Close()
