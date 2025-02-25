@@ -87,33 +87,35 @@ func (w *Wal) Run() error {
 			writeCancel()
 			return nil
 		case <-ticker.C:
-			w.mu.Lock()
-			w.data <- []byte(w.queryBuffer.String())
-			w.queryBuffer.Reset()
-			w.mu.Unlock()
+			w.Flush()
 		}
 	}
 }
 
 func (w *Wal) Write(query string) error {
-	defer w.mu.Unlock()
 	w.mu.Lock()
-
+	var data []byte
 	if w.queryBuffer.Len() > w.FlushingBatchSize {
-		w.data <- []byte(w.queryBuffer.String())
+		data = []byte(w.queryBuffer.String())
 		w.queryBuffer.Reset()
 	}
 
 	w.queryBuffer.WriteString(query + "\n")
+	w.mu.Unlock()
+
+	if len(data) > 0 {
+		w.data <- data
+	}
 	return nil
 }
 
 func (w *Wal) Flush() {
-	defer w.mu.Unlock()
 	w.mu.Lock()
-
-	w.data <- []byte(w.queryBuffer.String())
+	data := []byte(w.queryBuffer.String())
 	w.queryBuffer.Reset()
+	w.mu.Unlock()
+
+	w.data <- data
 }
 
 func (w *Wal) Close() error {
