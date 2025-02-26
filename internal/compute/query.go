@@ -19,3 +19,11 @@ func (q Query) Command() Command {
 func (q Query) Args() []string {
 	return q.args
 }
+
+func (q Query) ToSting() string {
+	res := string(q.command)
+	for _, a := range q.args {
+		res += " " + a
+	}
+	return res
+}

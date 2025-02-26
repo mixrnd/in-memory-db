@@ -10,6 +10,7 @@ type Config struct {
 	Engine  EngineConfig  `yaml:"engine"`
 	Network NetworkConfig `yaml:"network"`
 	Log     LogConfig     `yaml:"logging"`
+	Wal     WalConfig     `yaml:"wal"`
 }
 
 type EngineConfig struct {
@@ -28,8 +29,23 @@ type LogConfig struct {
 	Output string `yaml:"output"`
 }
 
+type WalConfig struct {
+	FlushingBatchSize    int           `yaml:"flushing_batch_size"`
+	FlushingBatchTimeout time.Duration `yaml:"flushing_batch_timeout"`
+	MaxSegmentSize       string        `yaml:"max_segment_size"`
+	DataDirectory        string        `yaml:"data_directory"`
+}
+
 func (nc NetworkConfig) MessageSizeToSizeInBytes() (int, error) {
-	b, err := bytesize.Parse(nc.MaxMessageSize)
+	return sizeInStringToBytes(nc.MaxMessageSize)
+}
+
+func (wc WalConfig) MaxSegmentSizeToSizeInBytes() (int, error) {
+	return sizeInStringToBytes(wc.MaxSegmentSize)
+}
+
+func sizeInStringToBytes(st string) (int, error) {
+	b, err := bytesize.Parse(st)
 	if err != nil {
 		return 0, err
 	}
